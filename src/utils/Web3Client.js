@@ -14,6 +14,7 @@ export function Web3Connect() {
             .request({ method: 'eth_requestAccounts' })
             .then((accounts) => {
                 account = accounts[0]
+                console.log(account)
             })
             .catch((err) => console.log(err))
     }
@@ -42,40 +43,55 @@ export function getCdp(roughCdpid) {
     to the given id without running more then 5 concurrent asynchronous processes, using the 
     p-limt library.
 */
-export async function getCdps(collateral, roughCdpid) {
+export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
     let i = 0
     let id = Number(roughCdpid)
     if (id <= 0) {
         console.log('Invalid id')
         return
     }
+
     const matchingCdps = []
     let helperVariable = 1
     let positiveSign = true
+
     const limit = pLimit(5)
+
     async function performRpcRequest(currentId) {
         try {
             if (i < 20) {
-                console.log(currentId)
-                const cdp = await limit(
-                    () => vaultInfoContract.methods.getCdpInfo(currentId).call({ from: account })
+                const cdp = await limit(() =>
+                    vaultInfoContract.methods.getCdpInfo(currentId).call({ from: account })
                 )
-                if (web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral) {
+
+                if (
+                    web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral /*&&
+                    Number(cdp.collateral) !== 0*/
+                ) {
                     console.log(web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, ''))
                     console.log('MATCH!')
+                    cdp.id = currentId
                     matchingCdps.push(cdp)
                     i++
+                    setItemsLoaded(prev => prev + 1)
+                    console.log(currentId)
                 }
+
                 const newId = currentId + helperVariable
                 helperVariable = positiveSign ? -helperVariable - 1 : -helperVariable + 1
                 positiveSign = !positiveSign
+
                 await performRpcRequest(newId)
             }
         }
         catch (error) {
             console.log(error)
         }
+        finally {
+            console.log('RPC Requests Completed!')
+        }
     }
+
     await performRpcRequest(id)
     return matchingCdps
 }
