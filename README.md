@@ -22,7 +22,7 @@ The user should choose a collateral type and a CDP ID, and the app will return i
 
 ### Technical Note
 
-The bulk of the logic is located in the [Web3Client.js](./utils/Web3Client.js).
+The bulk of the logic is located in the [Web3Client.js](./src/utils/Web3Client.js).
 
 ### PS
 
