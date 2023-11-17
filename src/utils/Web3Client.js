@@ -7,6 +7,7 @@ const VAULT_INFO_ADDRESS = '0x68C61AF097b834c68eA6EA5e46aF6c04E8945B2d'
 const MCD_VAT_ADDRESS = '0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B'
 let web3, account, vaultInfoContract, MCDVatContract
 
+/* Connects the user to a wallet and initializes a web3 instance */
 export function Web3Connect() {
     const provider = window.ethereum
 
@@ -16,7 +17,6 @@ export function Web3Connect() {
             .request({ method: 'eth_requestAccounts' })
             .then((accounts) => {
                 account = accounts[0]
-                console.log(account)
             })
             .catch((err) => console.log(err))
     }
@@ -25,6 +25,7 @@ export function Web3Connect() {
     }
 }
 
+/* Initializes the Vault Info Contract and MCDVat Contract */
 export function initializeContracts() {
     vaultInfoContract = new web3.eth.Contract(
         vaultInfoAbi,
@@ -39,6 +40,12 @@ export function initializeContracts() {
     console.log('Contracts initialized!')
 }
 
+
+/* 
+    Fetches the rate from the MCD Vat contract for the given collateral and changes
+    the value of the rate in state, which is later used to get the adjusted debt in the
+    Results component.
+*/
 export function adjustCollateralRate(collateral, setRate) {
     const bytesCollateral = web3.utils.asciiToHex(collateral)
     const bytes32Collateral = web3.utils.padRight(bytesCollateral, 64)
@@ -69,6 +76,7 @@ export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
 
     const limit = pLimit(5)
 
+    // Recursion based approach 
     async function performRpcRequest(currentId) {
         try {
             if (i < 20) {
@@ -78,7 +86,7 @@ export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
 
                 if (
                     web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral
-                    && Number(cdp.collateral) !== 0  // Add to dispaly only CDPs with collateral deposited
+                    /* && Number(cdp.collateral) !== 0 */  // Add to dispaly only CDPs with collateral deposited
                 ) {
                     cdp.id = currentId
                     matchingCdps.push(cdp)

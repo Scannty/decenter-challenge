@@ -24,18 +24,16 @@ export default function Form(props) {
         }
     }
 
-    async function handleDecimals(collateral) {
-        console.log(collateral)
+    /* For adjusting solidity decimals to normal numbers */
+    function handleDecimals(collateral) {
         adjustCollateralRate(collateral, props.setCollateralRate)
         switch (collateral) {
             case 'ETH-A':
                 props.setDecimals(18)
             case 'WBTC-A':
                 props.setDecimals(8)
-                console.log('Uspeli!')
             case 'USDC-A':
                 props.setDecimals(6)
-                console.log('WWWWW')
             default:
                 props.setDecimals(18)
         }

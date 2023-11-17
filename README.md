@@ -20,6 +20,10 @@ Then to run the project type in command line:
 
 The user should choose a collateral type and a CDP ID, and the app will return information for the 20 closest CDPs that match the given collateral type.
 
+### Technical Note
+
+The bulk of the logic is located in the [Web3Client.js](./utils/Web3Client.js).
+
 ### PS
 
 Pozz za Decenter :D
