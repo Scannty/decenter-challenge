@@ -11,14 +11,14 @@ let web3, account, vaultInfoContract, MCDVatContract
 export function Web3Connect() {
     const provider = window.ethereum
 
-    if (typeof provider !== undefined) {
+    if (typeof (provider) !== 'undefined') {
         web3 = new Web3(provider)
         provider
             .request({ method: 'eth_requestAccounts' })
             .then((accounts) => {
                 account = accounts[0]
             })
-            .catch((err) => console.log(err))
+            .catch((err) => alert(err))
     }
     else {
         alert('Metamask required!')
