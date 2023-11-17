@@ -79,13 +79,14 @@ export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
     // Recursion based approach 
     async function performRpcRequest(currentId) {
         try {
-            if (i < 20) {
+            if (i < 20 && currentId > 0) {
                 const cdp = await limit(() =>
                     vaultInfoContract.methods.getCdpInfo(currentId).call({ from: account })
                 )
 
                 if (
                     web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral
+                    && currentId > 0
                     /* && Number(cdp.collateral) !== 0 */  // Add to dispaly only CDPs with collateral deposited
                 ) {
                     cdp.id = currentId
