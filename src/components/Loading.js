@@ -3,9 +3,9 @@ import ProgressBar from './ProgressBar'
 
 export default function Loading(props) {
     return (
-        <div>
+        <div className={classes.divContainer}>
             <div className={classes.spinner} />
-            <h2>Items Loaded: {props.itemsLoaded}</h2>
+            <h3>Items Loaded: {props.itemsLoaded}</h3>
             <ProgressBar value={props.itemsLoaded * 5} />
         </div>
     )

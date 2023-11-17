@@ -16,3 +16,12 @@
     transform: rotate(360deg);
   }
 }
+
+.divContainer {
+  margin-top: 5%;
+  margin-left: 5%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}

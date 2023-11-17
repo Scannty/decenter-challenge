@@ -1,9 +1,11 @@
 import Web3 from "web3"
 import vaultInfoAbi from './VaultInfoAbi.json'
+import MCDVatAbi from './MCDVatAbi.json'
 import pLimit from "p-limit"
 
 const VAULT_INFO_ADDRESS = '0x68C61AF097b834c68eA6EA5e46aF6c04E8945B2d'
-let web3, account, vaultInfoContract
+const MCD_VAT_ADDRESS = '0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B'
+let web3, account, vaultInfoContract, MCDVatContract
 
 export function Web3Connect() {
     const provider = window.ethereum
@@ -23,18 +25,28 @@ export function Web3Connect() {
     }
 }
 
-export function initializeContract() {
+export function initializeContracts() {
     vaultInfoContract = new web3.eth.Contract(
         vaultInfoAbi,
         VAULT_INFO_ADDRESS
     )
 
-    console.log('Contract initialized!')
+    MCDVatContract = new web3.eth.Contract(
+        MCDVatAbi,
+        MCD_VAT_ADDRESS
+    )
+
+    console.log('Contracts initialized!')
 }
 
-export function getCdp(roughCdpid) {
-    vaultInfoContract.methods.getCdpInfo(roughCdpid).call({ from: account })
-        .then(arg => console.log(arg))
+export function adjustCollateralRate(collateral, setRate) {
+    const bytesCollateral = web3.utils.asciiToHex(collateral)
+    const bytes32Collateral = web3.utils.padRight(bytesCollateral, 64)
+    MCDVatContract.methods.ilks(bytes32Collateral).call({ from: account })
+        .then(arg => {
+            const rate = (Number(arg.rate) / (10 ** 27))
+            setRate(rate)
+        })
         .catch(err => console.log(err))
 }
 
@@ -44,7 +56,6 @@ export function getCdp(roughCdpid) {
     p-limt library.
 */
 export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
-    let i = 0
     let id = Number(roughCdpid)
     if (id <= 0) {
         console.log('Invalid id')
@@ -52,6 +63,7 @@ export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
     }
 
     const matchingCdps = []
+    let i = 0
     let helperVariable = 1
     let positiveSign = true
 
@@ -65,16 +77,13 @@ export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
                 )
 
                 if (
-                    web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral /*&&
-                    Number(cdp.collateral) !== 0*/
+                    web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral
+                    && Number(cdp.collateral) !== 0  // Add to dispaly only CDPs with collateral deposited
                 ) {
-                    console.log(web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, ''))
-                    console.log('MATCH!')
                     cdp.id = currentId
                     matchingCdps.push(cdp)
                     i++
                     setItemsLoaded(prev => prev + 1)
-                    console.log(currentId)
                 }
 
                 const newId = currentId + helperVariable
@@ -93,5 +102,6 @@ export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
     }
 
     await performRpcRequest(id)
+    console.log(matchingCdps)
     return matchingCdps
 }

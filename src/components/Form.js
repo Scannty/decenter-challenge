@@ -1,6 +1,6 @@
 import classes from './Form.module.css'
 import React from 'react'
-import { getCdps } from '../utils/Web3Client'
+import { getCdps, adjustCollateralRate } from '../utils/Web3Client'
 import { Button, FormControl, MenuItem, Select, InputLabel, TextField } from '@mui/material'
 
 export default function Form(props) {
@@ -10,6 +10,7 @@ export default function Form(props) {
     async function handleSubmit(event) {
         event.preventDefault()
         props.setIsLoading(prev => !prev)
+        handleDecimals(collateral)
         try {
             const cdps = await getCdps(collateral, roughCdpid, props.setItemsLoaded)
             props.setCdps(cdps)
@@ -23,9 +24,26 @@ export default function Form(props) {
         }
     }
 
+    async function handleDecimals(collateral) {
+        console.log(collateral)
+        adjustCollateralRate(collateral, props.setCollateralRate)
+        switch (collateral) {
+            case 'ETH-A':
+                props.setDecimals(18)
+            case 'WBTC-A':
+                props.setDecimals(8)
+                console.log('Uspeli!')
+            case 'USDC-A':
+                props.setDecimals(6)
+                console.log('WWWWW')
+            default:
+                props.setDecimals(18)
+        }
+    }
+
     return (
         <form className={classes.form} onSubmit={handleSubmit}>
-            <h1>TokenID Selector:</h1>
+            <h2>TokenID Selector:</h2>
             <div>
                 <FormControl fullWidth>
                     <InputLabel id="collateral-type">Collateral Type</InputLabel>
