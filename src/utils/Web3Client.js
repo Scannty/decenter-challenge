@@ -53,65 +53,68 @@ export function adjustCollateralRate(collateral, setRate) {
         .then(arg => {
             const rate = (Number(arg.rate) / (10 ** 27))
             setRate(rate)
+            console.log(rate)
         })
         .catch(err => console.log(err))
 }
 
 /*
     Given the collateral type and a CdpId, returns an array of 20 CDP positions closest
-    to the given id without running more then 5 concurrent asynchronous processes, using the 
-    p-limt library.
+    to the given id without running more then 5 concurrent asynchronous processes.
+    .
 */
 export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
-    let id = Number(roughCdpid)
+    let id = Number(roughCdpid);
     if (id <= 0) {
-        console.log('Invalid id')
-        return
+        console.log('Invalid id');
+        return [];
     }
 
-    const matchingCdps = []
-    let i = 0
-    let helperVariable = 1
-    let positiveSign = true
+    const matchingCdps = [];
+    let i = 0;
+    let helperVariable = 1;
+    let positiveSign = true;
+    let promises = []
 
-    const limit = pLimit(5)
-
-    // Recursion based approach 
-    async function performRpcRequest(currentId) {
-        try {
-            if (i < 20) {
-                if (currentId > 0) {
-                    const cdp = await limit(() =>
-                        vaultInfoContract.methods.getCdpInfo(currentId).call({ from: account })
-                    )
-
-                    if (
-                        web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral
-                        /* && Number(cdp.collateral) !== 0 */  // Add to dispaly only CDPs with collateral deposited
-                    ) {
-                        cdp.id = currentId
-                        matchingCdps.push(cdp)
-                        i++
-                        setItemsLoaded(prev => prev + 1)
-                    }
-                }
-
-                const newId = currentId + helperVariable
-                helperVariable = positiveSign ? -helperVariable - 1 : -helperVariable + 1
-                positiveSign = !positiveSign
-
-                await performRpcRequest(newId)
+    // Helper function that returns a promise that is automaticaly resolved
+    async function getCdp(currentId) {
+        return new Promise(async (resolve, reject) => {
+            const cdp = await vaultInfoContract.methods.getCdpInfo(currentId).call({ from: account })
+            console.log(i)
+            if (
+                web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral
+                /* && Number(cdp.collateral) !== 0 */  // Add to display only CDPs with collateral deposited
+            ) {
+                cdp.id = currentId;
+                matchingCdps.push(cdp);
+                i++;
+                setItemsLoaded(prev => prev + 1);
             }
+            resolve()
+        })
+    };
+
+    /* 
+        Loop-based approach, we fill the array with 5 promises, and then resolve them 
+        all at the same time with Promise.all()
+    */
+    while (i < 20) {
+        for (let j = 0; j < Math.min(5, 20 - i); j++) {    // If there wasnt for the second term we would get sometimes more then 20 solutions
+            console.log(i)
+            promises.push(getCdp(id));
+            id += helperVariable
+            helperVariable = positiveSign ? -helperVariable - 1 : -helperVariable + 1;
+            positiveSign = !positiveSign;
         }
-        catch (error) {
-            console.log(error)
-        }
-        finally {
-            console.log('RPC Requests Completed!')
-        }
+        console.log(promises)
+        await Promise.all(promises)
+        promises = []
     }
 
-    await performRpcRequest(id)
-    console.log(matchingCdps)
-    return matchingCdps
+    console.log('All RPC requests completed!');
+    console.log(matchingCdps);
+    return matchingCdps;
 }
+
+
+
