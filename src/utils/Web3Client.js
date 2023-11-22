@@ -59,6 +59,7 @@ export function adjustCollateralRate(collateral, setRate) {
 }
 
 /*
+    POPRAVLJENA FUNKCIJA :)
     Given the collateral type and a CdpId, returns an array of 20 CDP positions closest
     to the given id without running more then 5 concurrent asynchronous processes.
     .
