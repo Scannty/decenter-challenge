@@ -80,18 +80,21 @@ export async function getCdps(collateral, roughCdpid, setItemsLoaded) {
     // Helper function that returns a promise that is automaticaly resolved
     async function getCdp(currentId) {
         return new Promise(async (resolve, reject) => {
-            const cdp = await vaultInfoContract.methods.getCdpInfo(currentId).call({ from: account })
-            console.log(i)
-            if (
-                web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral
-                /* && Number(cdp.collateral) !== 0 */  // Add to display only CDPs with collateral deposited
-            ) {
-                cdp.id = currentId;
-                matchingCdps.push(cdp);
-                i++;
-                setItemsLoaded(prev => prev + 1);
+            if (currentId < 0) { resolve() }
+            else {
+                const cdp = await vaultInfoContract.methods.getCdpInfo(currentId).call({ from: account })
+                console.log(i)
+                if (
+                    web3.utils.hexToUtf8(cdp.ilk).replace(/\0/g, '') == collateral
+                    /* && Number(cdp.collateral) !== 0 */  // Add to display only CDPs with collateral deposited
+                ) {
+                    cdp.id = currentId;
+                    matchingCdps.push(cdp);
+                    i++;
+                    setItemsLoaded(prev => prev + 1);
+                }
+                resolve()
             }
-            resolve()
         })
     };
 
